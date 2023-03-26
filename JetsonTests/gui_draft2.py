@@ -18,13 +18,16 @@ from tkinter import messagebox, filedialog
 import mediapipe as mp
 #import os
 #from fn_try_gpu import *
-#from fn_model_1_3 import *
+from fn_model_2_1 import *
 import time
 #import HandTrackingModule as htm
 #----------------------------------
 
+
+model = keras.models.load_model('model2_1.h5', compile=False)
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.8, min_tracking_confidence=0.5)
 
 def CreateWidgets():
     root.cameraLabel = Label(root,
@@ -60,18 +63,40 @@ def ShowFeed():
     
     ret, frame = root.cap.read()
     x,y,c = frame.shape
-    hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.8, min_tracking_confidence=0.5)
-    
+    xpos, ypos = [], []
+    n = []
+       
     results = hands.process(frame)
         
     if results.multi_hand_landmarks:
         for hlms in results.multi_hand_landmarks:
-#           for lm in hlms.landmark:
+            
+            # Traceback (most recent call last):
+            # File "/usr/lib/python3.6/tkinter/__init__.py", line 1705, in __call__
+            #   return self.func(*args)
+            # File "/usr/lib/python3.6/tkinter/__init__.py", line 749, in callit
+            #   func(*args)
+            # File "gui_draft2.py", line 75, in ShowFeed
+            #   xpos.append(int(lm.x*w))
+            # AttributeError: 'tuple' object has no attribute 'x'
+            
+            for lm in enumerate(hlms.landmark):
+                xpos.append(int(lm.x*w))
+                ypos.append(int(lm.y*h))
+                
+            for i in range(len(xpos)):
+                n.append(xpos[i])
+                n.append(ypos[i])
                 
             mp_drawing.draw_landmarks(frame, hlms,
                                       mp_hands.HAND_CONNECTIONS,
                                       mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=4),
                                       mp_drawing.DrawingSpec(color=(0, 153, 153), thickness=2, circle_radius=2))
+        
+        predict = np.argmax(model.predict(np.array([n]), batch_size=1, verbose=0))
+        
+        print(int(predict))
+        
     if ret:
         
         ccFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
