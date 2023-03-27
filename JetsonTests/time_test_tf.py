@@ -5,10 +5,12 @@ import time
 
 
 model_load_time_toc = time.perf_counter()
-model = keras.models.load_model(r"C:\Users\ccm51\Documents\SD_SG_GESTURE\model\model2_1.h5")
+# model = keras.models.load_model(r"C:\Users\ccm51\Documents\SD_SG_GESTURE\model\model2_1.h5")
+model = keras.models.load_model(r"/home/sdgesture/Downloads/SD2_SG_GESTURE-main (1)/SD2_SG_GESTURE-main/JetsonTests/model2_1.h5")
 model_load_time_tic = time.perf_counter()
 
-valid_csv = open(r"C:\Users\ccm51\Documents\SD_SG_GESTURE\validation_dataset.csv", 'r')
+# valid_csv = open(r"C:\Users\ccm51\Documents\SD_SG_GESTURE\validation_dataset.csv", 'r')
+valid_csv = open(r"/home/sdgesture/Downloads/SD2_SG_GESTURE-main (1)/SD2_SG_GESTURE-main/JetsonTests/validation_dataset.csv",'r')
 data = list(csv.reader(valid_csv, delimiter=","))
 valid_csv.close()
 np_data = np.array(data)
