@@ -8,7 +8,7 @@ import os
 import time
 
 # Create Layout of the GUI
-layout = [
+main_layout = [
     [sg.Column([
         [sg.Text('', justification='center', expand_x=True)],
         [sg.Text('', justification='center', expand_x=True)],
@@ -31,12 +31,40 @@ layout = [
     ], element_justification='c', vertical_alignment='center')]
 ]
 
+# Define settings layout for GUI
+# Contains: Icons for each setting (like brightness, gestures, contrast)
+setting_layout = [
+    # NOT FINISHED
+]
+
+# Layout for GUI that controls visibilty of each sub-layout
+layout = [
+    [sg.Column(main_layout, key='main'), sg.Column(setting_layout, key='setting', visible=False)],
+    [sg.Button('Main'), sg.Button('Setting')]
+]
+
+def mse(img1, img2):
+   h, w = img1.shape
+   diff = cv2.subtract(img1, img2)
+   err = np.sum(diff**2)
+   mse = err/(float(h*w))
+   return mse
+
+def resize_image(img, scale_percent) :
+    # Calculate new size
+    width = int(img.shape[1] * scale_percent / 100)
+    height = int(img.shape[0] * scale_percent / 100)
+    dim = (width, height)
+    # Resize image
+    resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+    return resized
+
 # Create the PySimpleGUI Window
 window = sg.Window('SG_GESTURE', layout, size=(1920, 1080))
 
 # Initialize variables
 run_model = True
-nano_cam = False
+nano_cam = True
 
 if nano_cam:
     cap = cv2.VideoCapture('nvarguscamerasrc ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=2 ! video/x-raw, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink' , cv2.CAP_GSTREAMER)
@@ -71,6 +99,13 @@ while True:
             if event != sg.WIN_CLOSED : window['image'].update(filename='') # Destroy picture
         # When close window or press Close
         if event in (sg.WIN_CLOSED, 'Close'): break
+    
+    if event == 'Setting':
+        window['setting'].update(visible=True)
+        window['main'].update(visible=False)
+    elif event == 'Main':
+        window['main'].update(visible=True)
+        window['setting'].update(visible=False)
     
     # Run the gesture recognition model if the "run_model" flag is set to True
     if run_model:

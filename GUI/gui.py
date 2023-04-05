@@ -8,8 +8,8 @@ import numpy as np
 import os
 import time
 
-# Create Layouy of the GUI
-layout = [
+# Define main layout for GUI
+main_layout = [
     [sg.Column([
         [sg.Text('', justification='center', expand_x=True)],
         [sg.Text('', justification='center', expand_x=True)],
@@ -32,6 +32,18 @@ layout = [
         [sg.Text('Recognized Gesture', justification='c', font='_ 16 underline', expand_x=True)],
         [sg.Text('', key='gesture', justification='c', font='_ 70 bold', expand_x=True)]
     ], element_justification='c', vertical_alignment='center')]
+]
+
+# Define settings layout for GUI
+# Contains: Icons for each setting (like brightness, gestures, contrast)
+setting_layout = [
+    # NOT FINISHED
+]
+
+# Layout for GUI that controls visibilty of each sub-layout
+layout = [
+    [sg.Column(main_layout, key='main'), sg.Column(setting_layout, key='setting', visible=False)],
+    [sg.Button('Main'), sg.Button('Setting')]
 ]
 
 def mse(img1, img2):
@@ -88,6 +100,13 @@ while True:
         # When close window or press Close
         if event in (sg.WIN_CLOSED, 'Close'): break
     # Run Model
+    
+    if event == 'Setting':
+        window['setting'].update(visible=True)
+        window['main'].update(visible=False)
+    elif event == 'Main':
+        window['main'].update(visible=True)
+        window['setting'].update(visible=False)
     
     if run_model:
         if ret:
