@@ -40,7 +40,7 @@ setting_layout = [
 # Layout for GUI that controls visibilty of each sub-layout
 layout = [
     [sg.Column(main_layout, key='main'), sg.Column(setting_layout, key='setting', visible=False)],
-    [sg.Button('Main'), sg.Button('Setting')]
+    [sg.Button('Main', font='_ 32'), sg.Button('Setting', font='_ 32')]
 ]
 
 def mse(img1, img2):
@@ -64,6 +64,8 @@ window = sg.Window('SG_GESTURE', layout, size=(1920, 1080))
 
 # Initialize variables
 run_model = True
+
+# Set this variable True if using Jetson Nano with Raspberry Pi camera module, False if using personal webcam
 nano_cam = True
 
 if nano_cam:
