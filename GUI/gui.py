@@ -85,40 +85,51 @@ while True:
     # Read the camera frame
     ret, frame = cap.read()
     h, w, c = frame.shape
-    xpos, ypos = [], []
+    x_pos, y_pos = [], []
     n = []
 
     # Convert the frame from BGR to RGB
     # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
+
     results = hands.process(frame)
     if event in ('Stop', sg.WIN_CLOSED, 'Close'):
-        if run_model : 
-            run_model = False # Stop running
-            cap.release() # Release video
-            if event != sg.WIN_CLOSED : window['image'].update(filename='') # Destroy picture
+        if run_model:
+            run_model = False  # Stop running
+            cap.release()  # Release video
+            if event != sg.WIN_CLOSED: window['image'].update(filename='')  # Destroy picture
         # When close window or press Close
         if event in (sg.WIN_CLOSED, 'Close'): break
     # Run Model
-    
+
     if event == 'Setting':
         window['setting'].update(visible=True)
         window['main'].update(visible=False)
     elif event == 'Main':
         window['main'].update(visible=True)
         window['setting'].update(visible=False)
-    
+
     if run_model:
         if ret:
             if results.multi_hand_landmarks:
                 for hlms in results.multi_hand_landmarks:
                     for idx, lm in enumerate(hlms.landmark):
-                        xpos.append(int(lm.x*w))
-                        ypos.append(int(lm.y*h))
+                        x_pos.append(int(lm.x * w))
+                        y_pos.append(int(lm.y * h))
 
-                    for i in range(len(xpos)):
-                        n.append(xpos[i])
-                        n.append(ypos[i])
+                    x_max, x_min = int(max(x_pos)), int(min(x_pos))
+                    y_max, y_min = int(max(y_pos)), int(min(y_pos))
+
+                    crop_left = max(int(x_min - 40), 0)
+                    crop_right = min(int(x_max + 40), w)
+                    crop_top = max(int(y_min - 40), 0)
+                    crop_bot = min(int(y_max + 40), h)
+
+                    adjusted_x = [int(500 * ((x - crop_left) / (crop_right - crop_left))) for x in x_pos]
+                    adjusted_y = [int(500 * ((y - crop_top) / (crop_bot - crop_top))) for y in y_pos]
+
+                    for i in range(len(adjusted_x)):  # Stores the adjusted x and y values in coordinate pairs
+                        n.append(adjusted_x[i])
+                        n.append(adjusted_y[i])
 
                     mp_drawing.draw_landmarks(frame, hlms,
                                               mp_hands.HAND_CONNECTIONS,
