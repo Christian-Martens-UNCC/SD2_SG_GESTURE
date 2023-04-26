@@ -17,13 +17,14 @@ main_layout = [
         [sg.Image(source='', key='image', expand_y=True, size=(960, 1080))]
     ], element_justification='c', vertical_alignment='center'),
     sg.Column([
-        [sg.Text('SG_GESTURE: Needle Check', font='_ 24 bold', justification='center', expand_x=True)],
+        [sg.Text('Schaeffler Needle Check Station', font='_ 24 bold', justification='center', expand_x=True)],
         [sg.Text('Instructions', font='_ 14 underline', justification='center', expand_x=True)],
-        [sg.Text('Step 1: Perform roundness measurement with 5 needles', justification='l', font='_ 16', expand_x=True)],
+        [sg.Text('Step 0: Obtain five needles from the output pile.', justification='l', font='_ 16', expand_x=True)],
+        [sg.Text('Step 1: Perform outer diameter measurement', justification='l', font='_ 16', expand_x=True)],
         [sg.Text('Step 1a: Show the adjustment gesture if an adjustment was made', justification='l', font='_ 14', expand_x=True)],
-        [sg.Text('Step 2: Perform inner diameter measurement with 5 needles', justification='l', font='_ 16', expand_x=True)],
+        [sg.Text('Step 2: Perform 3-point roundness measurement', justification='l', font='_ 16', expand_x=True)],
         [sg.Text('Step 2a: Show the adjustment gesture if an adjustment was made', justification='l', font='_ 14', expand_x=True)],
-        [sg.Text('Step 3: Perform outer diameter measurement with 5 needles', justification='l', font='_ 16', expand_x=True)],
+        [sg.Text('Step 3: Perform 5-point roundness measurement', justification='l', font='_ 16', expand_x=True)],
         [sg.Text('Step 3a: Show the adjustment gesture if an adjustment was made', justification='l', font='_ 14', expand_x=True)],
         
         [sg.Text('', justification='center', expand_x=True)],
@@ -34,15 +35,108 @@ main_layout = [
     ], element_justification='c', vertical_alignment='center')]
 ]
 
+btn_size = (60, 15)
+
 # Define settings layout for GUI
 # Contains: Icons for each setting (like brightness, gestures, contrast)
 setting_layout = [
     # NOT FINISHED
+    [sg.Column([
+        [sg.Text('Settings', font='_ 24 bold', justification='center', expand_x=True)],
+        [sg.Column([
+            [sg.Button('1: Brightness', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
+            sg.Button('2: Contrast', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
+            sg.Button('3: Camera Flip', size=btn_size, button_color=('black', 'white'), pad=(10, 10))]
+        ], justification='c')],
+        [sg.Column([
+            [sg.Button('4: Red Adjustment', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
+            sg.Button('5: Green Adjustment', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
+            sg.Button('6: Blue Adjustment', size=btn_size, button_color=('black', 'white'), pad=(10, 10))]
+        ], justification='c')],
+        [sg.Column([
+            [sg.Button('7: Timer', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
+            sg.Button('8: Detection Conf', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
+            sg.Button('9: Tracking Conf', size=btn_size, button_color=('black', 'white'), pad=(10, 10))]
+        ], justification='c')]
+    ], element_justification='c', vertical_alignment='center', justification='c')]
+]
+
+bright_layout = [
+    [sg.Column([
+        [sg.Text('Brightness Setting', size=(20, 1), justification='center')],
+        [sg.Slider(range=(1, 9), default_value=5, orientation='h', size=(120, 40))],
+        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
+    ], element_justification='c', vertical_alignment='center', justification='c')]
+]
+contrast_layout = [
+    [sg.Column([
+        [sg.Text('Contrast Setting', size=(20, 1), justification='center')],
+        [sg.Slider(range=(1, 9), default_value=5, orientation='h', size=(120, 40))],
+        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
+    ], element_justification='c', vertical_alignment='center', justification='c')]
+]
+camera_layout = [
+    [sg.Column([
+        [sg.Text('Camera Orientation Setting', size=(20, 1), justification='center')],
+        [sg.Slider(range=(1, 4), default_value=5, orientation='h', size=(120, 40))],
+        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
+    ], element_justification='c', vertical_alignment='center', justification='c')]
+]
+red_layout = [
+    [sg.Column([
+        [sg.Text('Red Enhancement', size=(20, 1), justification='center')],
+        [sg.Slider(range=(0, 10), default_value=5, orientation='h', size=(120, 40))],
+        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
+    ], element_justification='c', vertical_alignment='center', justification='c')]
+]
+green_layout = [
+    [sg.Column([
+        [sg.Text('Green Enhancement', size=(20, 1), justification='center')],
+        [sg.Slider(range=(0, 10), default_value=5, orientation='h', size=(120, 40))],
+        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
+    ], element_justification='c', vertical_alignment='center', justification='c')]
+]
+blue_layout = [
+    [sg.Column([
+        [sg.Text('Blue Enhancement', size=(20, 1), justification='center')],
+        [sg.Slider(range=(0, 10), default_value=5, orientation='h', size=(120, 40))],
+        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
+    ], element_justification='c', vertical_alignment='center', justification='c')]
+]
+timer_layout = [
+    # Change timer between checks, which can be easily implemented with gestures
+    # Input string object that will continue to append characters (numbers in this case) until OK is pressed
+]
+detect_layout = [
+    [sg.Column([
+        [sg.Text('Detection Confidence', size=(20, 1), justification='center')],
+        [sg.Slider(range=(1, 10), default_value=5, orientation='h', size=(120, 40))],
+        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
+    ], element_justification='c', vertical_alignment='center', justification='c')]
+]
+tracking_layout = [
+    [sg.Column([
+        [sg.Text('Tracking Confidence', size=(20, 1), justification='center')],
+        [sg.Slider(range=(1, 10), default_value=5, orientation='h', size=(120, 40))],
+        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
+    ], element_justification='c', vertical_alignment='center', justification='c')]
 ]
 
 # Layout for GUI that controls visibilty of each sub-layout
 layout = [
-    [sg.Column(main_layout, key='main'), sg.Column(setting_layout, key='setting', visible=False)],
+    [
+        sg.Column(main_layout, key='main'),
+        sg.Column(setting_layout, key='setting', visible=False),
+        sg.Column(bright_layout, key='bright', visible=False),
+        sg.Column(contrast_layout, key='contrast', visible=False),
+        sg.Column(camera_layout, key='camera', visible=False),
+        sg.Column(red_layout, key='red', visible=False),
+        sg.Column(green_layout, key='green', visible=False),
+        sg.Column(blue_layout, key='blue', visible=False),
+        sg.Column(timer_layout, key='timer', visible=False),
+        sg.Column(detect_layout, key='detect', visible=False),
+        sg.Column(tracking_layout, key='tracking', visible=False)
+    ],
     [sg.Button('Main'), sg.Button('Setting')]
 ]
 
@@ -72,7 +166,7 @@ if nano_cam:
 else:
     cap = cv2.VideoCapture(0)
     
-model = keras.models.load_model('../JetsonTests/model2_1.h5', compile=False)
+model = keras.models.load_model('model2_2.h5', compile=False)
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.2, min_tracking_confidence=0.4)
@@ -100,13 +194,33 @@ while True:
         # When close window or press Close
         if event in (sg.WIN_CLOSED, 'Close'): break
     # Run Model
-
+    
+    # # DEBUG:
+    # event = '1: Brightness'
+    
     if event == 'Setting':
+        run_model = False
         window['setting'].update(visible=True)
         window['main'].update(visible=False)
     elif event == 'Main':
+        run_model = True
         window['main'].update(visible=True)
         window['setting'].update(visible=False)
+    elif event == '1: Brightness':
+        window['bright'].update(visible=True)
+        window['setting'].update(visible=False)
+        
+        window['main'].update(visible=False)
+    elif event == '2: Contrast':
+        window['contrast'].update(visible=True)
+        window['setting'].update(visible=False)
+        
+        window['main'].update(visible=False)
+    elif event == '3. Camera Flip':
+        window['camera'].update(visible=True)
+        window['setting'].update(visible=False)
+        
+        window['main'].update(visible=False)
 
     if run_model:
         if ret:
@@ -151,6 +265,17 @@ while True:
             cap.release()
             break
     else:
+        # Settings Logic
+        # Button Operations
+        if event == '1: Brightness':
+            # Brightness setting logic:
+            # First: Set correct layout
+            window['bright'].update(visible=True)
+            window['setting'].update(visible=False)
+            
+            # Second: 
+            
+                
         # Capture sequential frames
         if len(seq_frames) < 1:
             seq_frames.append(frame)
