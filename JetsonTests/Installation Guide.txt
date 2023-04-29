@@ -1,0 +1,173 @@
+# Installation list:
+
+# a fresh start, so check for updates
+$ sudo apt-get update
+$ sudo apt-get upgrade
+
+# Installation process input: press y and press enter
+# Installation process reset docker prompt: press <yes>
+
+#--------------------------------------------------------------------
+
+# Install virtual environment
+# https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/
+
+# Redundancy steps to ensure pip/pip3 is updated
+$ python3 -m pip install --user --upgrade pip
+$ python3 -m pip --version
+
+# This step does not work as the step suggests. The terminal will give you a command for proper
+# installation of virtual env
+# $ python3 -m pip install --user virtualenv
+$ sudo apt-get install python3-venv
+
+# Creating a virtual enviornment
+# "env" could be any name of choice
+$ python3 -m venv env
+
+# Activate virtual envioronment
+$ source env/bin/activate
+
+#--------------------------------------------------------------------
+
+# From this point on the (env) should be active displaying next to name on terminal
+# ex) (env) sd2gesture@sd2gesture-desktop:~$
+# Some commands will show again for redundancy to ensure that the files are updated as required
+# for each installation if needed
+
+$ sudo apt-get update
+$ sudo apt-get upgrade
+
+# Installation process input: press y and press enter
+# Installation process reset docker prompt: press <yes>
+
+#----------------------------------------------------------------------
+
+# Steps taken from Jetson Zoo site for initial set up
+# https://elinux.org/Jetson_Zoo also provided within the Jetson Nano desktop shortcut link
+
+# install prerequisites
+$ sudo apt-get install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev liblapack-dev libblas-dev gfortran
+
+# Installation process prompt: press y and press enter
+
+# install and upgrade pip3
+$ sudo apt-get install python3-pip
+
+# Installation process prompt: press y and press enter
+
+# On the Jetson Zoo page, setuptools=49.6.0 is missing the operator ==
+# The terminal will notify you of mistake if copy pasted the commands from the page.
+$ sudo pip3 install -U pip testresources setuptools==49.6.0
+
+# install the following python packages
+$ sudo pip3 install -U numpy==1.19.4 future==0.18.2 mock==3.0.5 h5py==2.10.0 keras_preprocessing==1.1.1 keras_applications==1.0.8 gast==0.2.2 futures protobuf pybind11
+
+# There are three commands: Tensorflow for 1.15, 2.x for JetPack 4.6, 2.x for JetPack 5.0
+# Choose the second option
+# or install the latest version of TensorFlow (2.x) for JetPack 4.6:
+$ sudo pip3 install --pre --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v46 tensorflow
+
+#----------------------------------------------------------------------
+
+Following guide will help install libraries along side mediapipe
+https://github.com/Melvinsajith/How-to-Install-Mediapipe-in-Jetson-Nano
+
+$ sudo apt update
+$ sudo apt-get update
+
+# requirements for tensorflow
+$ sudo apt-get install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev liblapack-dev libblas-dev gfortran
+
+# install and upgrade pip3
+$ sudo apt-get install python3-pip
+
+$ sudo pip3 install -U pip testresources setuptools==49.6.0
+
+$ sudo pip3 install -U --no-deps numpy==1.19.4 future==0.18.2 mock==3.0.5 keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 protobuf pybind11 cython pkgconfig
+$ sudo env H5PY_SETUP_REQUIRES=0 pip3 install -U h5py==3.1.0
+
+$ sudo apt-get install python3-opencv
+$ sudo apt-get remove python3-opencv
+
+$ git clone https://github.com/JetsonHacksNano/installSwapfile.git
+$ cd installSwapfile
+$ ./installSwapfile.sh
+
+$ cd
+$ git clone https://github.com/google/mediapipe.git
+$ cd mediapipe
+
+$ sudo apt-get install -y libopencv-core-dev  libopencv-highgui-dev libopencv-calib3d-dev libopencv-features2d-dev libopencv-imgproc-dev libopencv-video-dev
+$ sudo chmod 744 setup_opencv.sh
+$ ./setup_opencv.sh
+
+$ sudo pip3 install opencv_contrib_python
+$ sudo apt install curl
+
+# In the github there is an additional link after the last step to download zip file for newer way of installing mediapipe.
+
+$ cd Downloads
+$ sudo apt install unzip
+$ unzip mediapipe-bin.zip
+
+$ cd mediapipe-bin
+$ sudo pip3 install numpy-1.19.4-cp36-none-manylinux2014_aarch64.whl mediapipe-0.8.5_cuda102-cp36-none-linux_aarch64.whl
+$ pip3 install dataclasses
+
+#-------------------------------------------------------------------------------
+
+# Guide to installing OpenCV 4.5.1
+# https://qengineering.eu/install-opencv-4.5-on-jetson-nano.html
+
+# a fresh start, so check for updates
+$ sudo apt-get update
+$ sudo apt-get upgrade
+# install nano
+$ sudo apt-get install nano
+# install dphys-swapfile
+$ sudo apt-get install dphys-swapfile
+# enlarge the boundary (4.5.2 and higher)
+$ sudo nano /sbin/dphys-swapfile
+# give the required memory size
+$ sudo nano /etc/dphys-swapfile
+# reboot afterwards
+$ sudo reboot
+
+# check your memory first
+$ free -m
+# you need at least a total of 6.5 GB!
+# if not, enlarge your swap space as explained in the guide
+$ wget https://github.com/Qengineering/Install-OpenCV-Jetson-Nano/raw/main/OpenCV-4-5-1.sh
+$ sudo chmod 755 ./OpenCV-4-5-1.sh
+$ ./OpenCV-4-5-1.sh
+# once the installation is done...
+$ rm OpenCV-4-5-1.sh
+# remove the dphys-swapfile now
+$ sudo /etc/init.d/dphys-swapfile stop
+$ sudo apt-get remove --purge dphys-swapfile
+# just a tip to save an additional 275 MB
+$ sudo rm -rf ~/opencv
+$ sudo rm -rf ~/opencv_contrib
+
+$ sudo -H pip install -U jetson-stats
+$ sudo reboot
+# start the app with the simple command
+$ jtop
+
+#-------------------------------------------------------------------------
+
+# additional installations
+# Install py simple gui
+
+$ pip3 install pysimplegui
+
+# Install Jupyter Notebook
+# https://forums.developer.nvidia.com/t/jupyter-notebook-in-jetson-nano/72586/2
+
+$ sudo apt install nodejs npm
+$ sudo apt install python3-pip
+$ sudo pip3 install jupyter jupyterlab
+$ sudo jupyter labextension install @jupyter-widgets/jupyterlab-manager
+$ jupyter lab --generate-config
+
