@@ -1,6 +1,8 @@
 # https://www.pysimplegui.org/en/latest/#jump-start
 import PySimpleGUI as sg
 import cv2
+import csv
+import datetime
 
 import mediapipe as mp
 from fn_model_2_1 import *
@@ -159,6 +161,20 @@ def resize_image(img, scale_percent) :
     resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
     return resized
 
+def convert_gesture(gesture, saved_gestures):
+    if len(saved_gestures) == 0:
+        if gesture == 0:
+            return "None"
+        elif gesture == 1:
+            return "Up"
+        elif gesture == 10:
+            return "Down"
+    elif len(saved_gestures) in (1, 2):
+        if gesture == 0:
+            return "No"
+        elif gesture == 10:
+            return "Yes"
+
 # Create the Window
 window = sg.Window('SG_GESTURE', layout, size=(1920, 1080))
 run_model = False
@@ -187,6 +203,9 @@ need_verify = False
 # Variables for current page check
 current_main = True
 current_settings = False
+
+# CSV file variables
+filename = "Needle_Checks.csv"
 
 while True:
     event, values = window.read(timeout=20)
@@ -295,14 +314,15 @@ while True:
                         need_verify = False
                     else:
                         # Change label object to ask operator for verification
-                        window['gesture'].update(value=(str(curr_gesture)))
+                        curr_gesture_str = convert_gesture(curr_gesture, saved_gestures)
+                        window['gesture'].update(value=curr_gesture_str)
                         window['gesture'].update(text_color='red')
                         window['verify'].update(visible=True)
 
                         if verify_gesture == 10:
-                            sg.popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture} gesture', 2)
+                            sg.popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture_str} gesture', 2)
                             # Save curr_gesture to saved_gestures and restart cycle
-                            saved_gestures.append(curr_gesture)
+                            saved_gestures.append(curr_gesture_str)
 
                             window['gesture'].update(value='')
                             window['gesture'].update(text_color='black')
@@ -328,14 +348,15 @@ while True:
                         need_verify = False
                     else:
                         # Change label object to ask operator for verification
-                        window['gesture'].update(value=(str(curr_gesture)))
+                        curr_gesture_str = convert_gesture(curr_gesture, saved_gestures)
+                        window['gesture'].update(value=curr_gesture_str)
                         window['gesture'].update(text_color='red')
                         window['verify'].update(visible=True)
 
                         if verify_gesture == 10:
-                            sg.popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture} gesture', 2)
+                            sg.popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture_str} gesture', 2)
                             # Save curr_gesture to saved_gestures and restart cycle
-                            saved_gestures.append(curr_gesture)
+                            saved_gestures.append(curr_gesture_str)
 
                             window['gesture'].update(value='')
                             window['gesture'].update(text_color='black')
@@ -361,14 +382,15 @@ while True:
                         need_verify = False
                     else:
                         # Change label object to ask operator for verification
-                        window['gesture'].update(value=(str(curr_gesture)))
+                        curr_gesture_str = convert_gesture(curr_gesture, saved_gestures)
+                        window['gesture'].update(value=curr_gesture_str)
                         window['gesture'].update(text_color='red')
                         window['verify'].update(visible=True)
 
                         if verify_gesture == 10:
-                            sg.popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture} gesture', 2)
+                            sg.popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture_str} gesture', 2)
                             # Save curr_gesture to saved_gestures and restart cycle
-                            saved_gestures.append(curr_gesture)
+                            saved_gestures.append(curr_gesture_str)
 
                             window['gesture'].update(value='')
                             window['gesture'].update(text_color='black')
@@ -397,6 +419,10 @@ while True:
                         sg.popup_quick_message(f'Recieved YES gesture: Verified session', 2)
                         # Save saved_gestures list to csv file with date/time
                         # TODO: Code for saving will go here
+                        now = datetime.datetime.now()
+                        with open(filename, "a", newline="") as file:
+                            writer = csv.writer(file)
+                            writer.writerow([now] + saved_gestures)
 
                         window['gesture'].update(value='')
                         window['gesture'].update(text_color='black')
