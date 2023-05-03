@@ -30,7 +30,8 @@ main_layout = [
         [sg.Text('Step 3: Perform 5-point roundness measurement', justification='l', font='_ 16', expand_x=True)],
         [sg.Text('Step 3a: Show the adjustment gesture if an adjustment was made', justification='l', font='_ 14', expand_x=True)],
         
-        [sg.Text('', justification='center', expand_x=True)],
+        [sg.Text('Current Saved Gestures', justification='center', font='_ 16 underline', expand_x=True)],
+        [sg.Text('', key='current', justification='c', font='_ 16', expand_x=True)],
         [sg.Text('', justification='center', expand_x=True)],
         
         [sg.Text('Recognized Gesture', justification='c', font='_ 16 underline', expand_x=True)],
@@ -188,7 +189,7 @@ else:
 model = keras.models.load_model('model2_2.h5', compile=False)
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.2, min_tracking_confidence=0.4)
+hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.1, min_tracking_confidence=0.3)
 
 seq_frames = []
 saved_gestures = []  # List of saved gestures for the gauge checks
@@ -206,6 +207,9 @@ current_settings = False
 
 # CSV file variables
 filename = "Needle_Checks.csv"
+
+def my_popup_quick_message(message, font='_ 20'):
+    return sg.popup_quick_message(message, font=font)
 
 while True:
     event, values = window.read(timeout=20)
@@ -292,10 +296,11 @@ while True:
                 if last_gesture == 11 and not need_verify:
                     if saved_gestures:
                         # Delete previous saved gesture
+                        my_popup_quick_message('Deleted previous gesture')
                         saved_gestures.pop()
                     else:
                         # No previous saved gestures
-                        sg.popup_quick_message('No previous gestures recorded', 3)
+                        my_popup_quick_message('No previous gestures recorded')
                 # Check if already verifying gesture
                 elif not need_verify:
                     # Save the gesture to verify
@@ -307,10 +312,12 @@ while True:
                 last_gesture = -1
         
         if current_main:
+            # Update current saved gestures label
+            window['current'].update(value=str(saved_gestures))
             if need_verify:
                 if len(saved_gestures) == 0:
                     if curr_gesture not in (1, 10, 0):
-                        sg.popup_quick_message('Invalid gesture for OD Gauge Check', 3)
+                        my_popup_quick_message('Invalid gesture for OD Gauge Check')
                         need_verify = False
                     else:
                         # Change label object to ask operator for verification
@@ -320,31 +327,31 @@ while True:
                         window['verify'].update(visible=True)
 
                         if verify_gesture == 10:
-                            sg.popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture_str} gesture', 2)
+                            my_popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture_str} gesture')
                             # Save curr_gesture to saved_gestures and restart cycle
                             saved_gestures.append(curr_gesture_str)
 
                             window['gesture'].update(value='')
-                            window['gesture'].update(text_color='black')
+                            window['gesture'].update(text_color='white')
                             window['verify'].update(visible=False)
                             curr_gesture = -1
                             verify_gesture = -1
                             need_verify = False
                         elif verify_gesture == 11:
-                            sg.popup_quick_message('Recieved NO gesture: redo gesture', 2)
+                            my_popup_quick_message('Recieved NO gesture: redo gesture')
                             
                             window['gesture'].update(value='')
-                            window['gesture'].update(text_color='black')
+                            window['gesture'].update(text_color='white')
                             window['verify'].update(visible=False)
                             curr_gesture = -1
                             verify_gesture = -1
                             need_verify = False
                         elif verify_gesture in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9):
-                            sg.popup_quick_message('Invalid verification gesture, try again', 2)
+                            my_popup_quick_message('Invalid verification gesture, try again')
                             verify_gesture = -1
                 elif len(saved_gestures) == 1:
                     if curr_gesture not in (10, 0):
-                        sg.popup_quick_message('Invalid gesture for 3-point Gauge Check')
+                        my_popup_quick_message('Invalid gesture for 3-point Gauge Check')
                         need_verify = False
                     else:
                         # Change label object to ask operator for verification
@@ -354,31 +361,31 @@ while True:
                         window['verify'].update(visible=True)
 
                         if verify_gesture == 10:
-                            sg.popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture_str} gesture', 2)
+                            my_popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture_str} gesture')
                             # Save curr_gesture to saved_gestures and restart cycle
                             saved_gestures.append(curr_gesture_str)
 
                             window['gesture'].update(value='')
-                            window['gesture'].update(text_color='black')
+                            window['gesture'].update(text_color='white')
                             window['verify'].update(visible=False)
                             curr_gesture = -1
                             verify_gesture = -1
                             need_verify = False
                         elif verify_gesture == 11:
-                            sg.popup_quick_message('Recieved NO gesture: redo gesture', 2)
+                            my_popup_quick_message('Recieved NO gesture: redo gesture')
                             
                             window['gesture'].update(value='')
-                            window['gesture'].update(text_color='black')
+                            window['gesture'].update(text_color='white')
                             window['verify'].update(visible=False)
                             curr_gesture = -1
                             verify_gesture = -1
                             need_verify = False
                         elif verify_gesture in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9):
-                            sg.popup_quick_message('Invalid verification gesture, try again', 2)
+                            my_popup_quick_message('Invalid verification gesture, try again')
                             verify_gesture = -1
                 elif len(saved_gestures) == 2:
                     if curr_gesture not in (10, 0):
-                        sg.popup_quick_message('Invalid gesture for 3-point Gauge Check')
+                        my_popup_quick_message('Invalid gesture for 3-point Gauge Check')
                         need_verify = False
                     else:
                         # Change label object to ask operator for verification
@@ -388,12 +395,12 @@ while True:
                         window['verify'].update(visible=True)
 
                         if verify_gesture == 10:
-                            sg.popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture_str} gesture', 2)
+                            my_popup_quick_message(f'Recieved YES gesture: Verified {curr_gesture_str} gesture')
                             # Save curr_gesture to saved_gestures and restart cycle
                             saved_gestures.append(curr_gesture_str)
 
                             window['gesture'].update(value='')
-                            window['gesture'].update(text_color='black')
+                            window['gesture'].update(text_color='white')
                             window['verify'].update(visible=False)
                             curr_gesture = -1
                             verify_gesture = -1
@@ -401,22 +408,22 @@ while True:
                             # Leave need_verify on for session verfication
                             need_verify = True
                         elif verify_gesture == 11:
-                            sg.popup_quick_message('Recieved NO gesture: redo gesture', 2)
+                            my_popup_quick_message('Recieved NO gesture: redo gesture')
                             
                             window['gesture'].update(value='')
-                            window['gesture'].update(text_color='black')
+                            window['gesture'].update(text_color='white')
                             window['verify'].update(visible=False)
                             curr_gesture = -1
                             verify_gesture = -1
                             need_verify = False
                         elif verify_gesture in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9):
-                            sg.popup_quick_message('Invalid verification gesture, try again', 2)
+                            my_popup_quick_message('Invalid verification gesture, try again')
                             verify_gesture = -1
                 elif len(saved_gestures) == 3:
                     # Review saved gestures and final verification
                     window['session_check'].update(value=f'Verify saved gestures: {saved_gestures}')
                     if verify_gesture == 10:
-                        sg.popup_quick_message(f'Recieved YES gesture: Verified session', 2)
+                        my_popup_quick_message(f'Recieved YES gesture: Verified session')
                         # Save saved_gestures list to csv file with date/time
                         # TODO: Code for saving will go here
                         now = datetime.datetime.now()
@@ -425,7 +432,7 @@ while True:
                             writer.writerow([now] + saved_gestures)
 
                         window['gesture'].update(value='')
-                        window['gesture'].update(text_color='black')
+                        window['gesture'].update(text_color='white')
                         window['verify'].update(visible=False)
                         window['session_check'].update(value='')
                         curr_gesture = -1
@@ -433,10 +440,10 @@ while True:
                         need_verify = False
                         saved_gestures = []
                     elif verify_gesture == 11:
-                        sg.popup_quick_message('Recieved NO gesture: redo session', 2)
+                        my_popup_quick_message('Recieved NO gesture: redo session')
 
                         window['gesture'].update(value='')
-                        window['gesture'].update(text_color='black')
+                        window['gesture'].update(text_color='white')
                         window['verify'].update(visible=False)
                         window['session_check'].update(value='')
                         curr_gesture = -1
@@ -444,7 +451,7 @@ while True:
                         need_verify = False
                         saved_gestures = []
                     elif verify_gesture in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9):
-                        sg.popup_quick_message('Invalid verification gesture, try again', 2)
+                        my_popup_quick_message('Invalid verification gesture, try again')
                         verify_gesture = -1
                     
             # if not results.multi_hand_landmarks:
