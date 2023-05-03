@@ -7,6 +7,7 @@ import datetime
 import mediapipe as mp
 from fn_model_2_1 import *
 from fn_char_storage import *
+from option_menu_parameters import *
 import numpy as np
 import os
 import time
@@ -30,14 +31,17 @@ main_layout = [
         [sg.Text('Step 3: Perform 5-point roundness measurement', justification='l', font='_ 16', expand_x=True)],
         [sg.Text('Step 3a: Show the adjustment gesture if an adjustment was made', justification='l', font='_ 14', expand_x=True)],
         
-        [sg.Text('Current Saved Gestures', justification='center', font='_ 16 underline', expand_x=True)],
-        [sg.Text('', key='current', justification='c', font='_ 16', expand_x=True)],
+        [sg.Text('Saved Gestures', justification='center', font='_ 16 underline', expand_x=True)],
+        [sg.Text('', key='saved', justification='c', font='_ 16', expand_x=True)],
         [sg.Text('', justification='center', expand_x=True)],
+        [sg.Text('Current Gestures', justification='c', font='_ 16 underline', expand_x=True)],
+        [sg.Text('', key='current', justification='c', font='_ 25 bold', expand_x=True)],
         
         [sg.Text('Recognized Gesture', justification='c', font='_ 16 underline', expand_x=True)],
         [sg.Text('', key='gesture', justification='c', font='_ 70 bold', expand_x=True)],
         [sg.Text('Is this correct?', key='verify', justification='c', font='_ 50', expand_x=True, visible=False)],
-        [sg.Text('', key='session_check', justification='c', font='_ 30', expand_x=True)]
+        [sg.Text('', key='session_check', justification='c', font='_ 20', expand_x=True)],
+        [sg.Text('', key='sleep_time', justification='c', font='_ 24 bold', expand_x=True, visible=False)]
     ], element_justification='c', vertical_alignment='center')]
 ]
 
@@ -70,7 +74,7 @@ setting_layout = [
 bright_layout = [
     [sg.Column([
         [sg.Text('Brightness Setting', size=(20, 1), justification='center')],
-        [sg.Slider(range=(1, 9), default_value=5, orientation='h', size=(120, 40))],
+        [sg.Slider(range=(1, 9), default_value=brightness_dic["stored_val"], orientation='h', size=(120, 40))],
         [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
     ], element_justification='c', vertical_alignment='center', justification='c')]
 ]
@@ -162,19 +166,31 @@ def resize_image(img, scale_percent) :
     resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
     return resized
 
-def convert_gesture(gesture, saved_gestures):
-    if len(saved_gestures) == 0:
-        if gesture == 0:
-            return "None"
-        elif gesture == 1:
-            return "Up"
-        elif gesture == 10:
-            return "Down"
-    elif len(saved_gestures) in (1, 2):
-        if gesture == 0:
-            return "No"
-        elif gesture == 10:
+def convert_gesture(gesture, saved_gestures, need_verify):
+    if need_verify:
+        if gesture == 10:
             return "Yes"
+        elif gesture == 11:
+            return "No"
+        else:
+            return "Invalid"
+    else:
+        if len(saved_gestures) == 0:
+            if gesture == 0:
+                return "None"
+            elif gesture == 1:
+                return "Up"
+            elif gesture == 10:
+                return "Down"
+            else:
+                return "Invalid"
+        elif len(saved_gestures) in (1, 2):
+            if gesture == 0:
+                return "No"
+            elif gesture == 10:
+                return "Yes"
+            else:
+                return "Invalid"
 
 # Create the Window
 window = sg.Window('SG_GESTURE', layout, size=(1920, 1080))
@@ -200,19 +216,27 @@ setting_state = -1     # The current setting state that is being edited
 curr_gesture = -1
 verify_gesture = -1
 need_verify = False
+gesture_event = 0
+start_time = time.time()
 
 # Variables for current page check
-current_main = True
+current_main = False
 current_settings = False
+current_sleep = True
 
 # CSV file variables
 filename = "Needle_Checks.csv"
 
-def my_popup_quick_message(message, font='_ 20'):
-    return sg.popup_quick_message(message, font=font)
+def my_popup_quick_message(message, font='_ 20', auto_close_duration=2):
+    return sg.popup_quick_message(message, font=font, auto_close_duration=auto_close_duration)
 
 while True:
     event, values = window.read(timeout=20)
+    
+    # Check for gesture-based events
+    if gesture_event:
+        event = gesture_event
+        gesture_event = 0
 
     # Read the camera frame
     ret, frame = cap.read()
@@ -222,8 +246,9 @@ while True:
 
     # Convert the frame from BGR to RGB
     # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
+    
     results = hands.process(frame)
+    
     if event in ('Stop', sg.WIN_CLOSED, 'Close'):
         if run_model:
             run_model = False  # Stop running
@@ -262,6 +287,11 @@ while True:
 
     if run_model:
         if ret:
+            if results.multi_handedness:
+                for hand in results.multi_handedness:
+                    if hand.classification[0].label == "Right":
+                        frame = cv2.flip(frame, 1)
+                        results = hands.process(frame)
             if results.multi_hand_landmarks:
                 for hlms in results.multi_hand_landmarks:
                     for idx, lm in enumerate(hlms.landmark):
@@ -290,7 +320,11 @@ while True:
 
                 predict = np.argmax(model.predict(np.array([n]), batch_size=1, verbose=0))
                 last_gesture, gest_history = char_storage(predict, gest_history, gest_len)
-                window['gesture'].update(value=(str(predict)))
+                
+                # Update 'current' label with digit and meaning of gesture
+                output_string = str(predict) + ' - ' + convert_gesture(predict, saved_gestures, need_verify)
+                window['current'].update(value=(output_string))
+                print(predict)
             elif last_gesture != -1 and current_main:
                 # Check if it is the delete gesture
                 if last_gesture == 11 and not need_verify:
@@ -301,11 +335,16 @@ while True:
                     else:
                         # No previous saved gestures
                         my_popup_quick_message('No previous gestures recorded')
+                elif last_gesture == 9 and not need_verify:
+                    gesture_event = 'Setting'
+                    current_main = False
+                    current_setting = True
                 # Check if already verifying gesture
                 elif not need_verify:
                     # Save the gesture to verify
                     curr_gesture = last_gesture
-                    need_verify = True
+                    if current_main:
+                        need_verify = True
                 else:
                     # save verification gesture
                     verify_gesture = last_gesture
@@ -313,7 +352,7 @@ while True:
         
         if current_main:
             # Update current saved gestures label
-            window['current'].update(value=str(saved_gestures))
+            window['saved'].update(value=str(saved_gestures))
             if need_verify:
                 if len(saved_gestures) == 0:
                     if curr_gesture not in (1, 10, 0):
@@ -321,7 +360,7 @@ while True:
                         need_verify = False
                     else:
                         # Change label object to ask operator for verification
-                        curr_gesture_str = convert_gesture(curr_gesture, saved_gestures)
+                        curr_gesture_str = convert_gesture(curr_gesture, saved_gestures, need_verify=False)
                         window['gesture'].update(value=curr_gesture_str)
                         window['gesture'].update(text_color='red')
                         window['verify'].update(visible=True)
@@ -350,12 +389,12 @@ while True:
                             my_popup_quick_message('Invalid verification gesture, try again')
                             verify_gesture = -1
                 elif len(saved_gestures) == 1:
-                    if curr_gesture not in (10, 0):
+                    if curr_gesture not in (10, 0, 11):
                         my_popup_quick_message('Invalid gesture for 3-point Gauge Check')
                         need_verify = False
                     else:
                         # Change label object to ask operator for verification
-                        curr_gesture_str = convert_gesture(curr_gesture, saved_gestures)
+                        curr_gesture_str = convert_gesture(curr_gesture, saved_gestures, need_verify=False)
                         window['gesture'].update(value=curr_gesture_str)
                         window['gesture'].update(text_color='red')
                         window['verify'].update(visible=True)
@@ -389,7 +428,7 @@ while True:
                         need_verify = False
                     else:
                         # Change label object to ask operator for verification
-                        curr_gesture_str = convert_gesture(curr_gesture, saved_gestures)
+                        curr_gesture_str = convert_gesture(curr_gesture, saved_gestures, need_verify=False)
                         window['gesture'].update(value=curr_gesture_str)
                         window['gesture'].update(text_color='red')
                         window['verify'].update(visible=True)
@@ -423,7 +462,7 @@ while True:
                     # Review saved gestures and final verification
                     window['session_check'].update(value=f'Verify saved gestures: {saved_gestures}')
                     if verify_gesture == 10:
-                        my_popup_quick_message(f'Recieved YES gesture: Verified session')
+                        my_popup_quick_message(f'Recieved YES gesture: Verified session, setting device to sleep mode', auto_close_duration = 5)
                         # Save saved_gestures list to csv file with date/time
                         # TODO: Code for saving will go here
                         now = datetime.datetime.now()
@@ -439,6 +478,13 @@ while True:
                         verify_gesture = -1
                         need_verify = False
                         saved_gestures = []
+                        
+                        # Set device to sleep mode
+                        run_model = False
+                        window['image'].update(visible=False)
+                        current_main = False
+                        current_sleep = True
+                        start_time = time.time()
                     elif verify_gesture == 11:
                         my_popup_quick_message('Recieved NO gesture: redo session')
 
@@ -454,8 +500,13 @@ while True:
                         my_popup_quick_message('Invalid verification gesture, try again')
                         verify_gesture = -1
                     
-            # if not results.multi_hand_landmarks:
-                
+        elif current_setting:
+            # Settings logic after
+            if curr_gesture == 1:
+                # Perform "brightness" button action
+                gesture_event = '1: Brightness'
+            
+            
         # Update the PySimpleGUI Image object
         # window['image'].update(data=cv2.imencode('.png', frame)[1].tobytes())
         
@@ -469,6 +520,31 @@ while True:
             cap.release()
             break
     else:
+        if current_sleep:
+            elapsed_time = time.time() - start_time
+            hours, rem = divmod(elapsed_time, 3600)
+            minutes, seconds = divmod(rem, 60)
+            # print the elapsed time in the hours:minutes:seconds format
+            window['sleep_time'].update(visible=True)
+            window['sleep_time'].update(value="Elapsed Time since previous check: {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
+            if len(seq_frames) < 1:
+                seq_frames.append(frame)
+            else:
+                img1 = seq_frames[0]
+                img2 = frame
+
+                img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+                img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+                error = mse(img1, img2)
+                print(error)
+                if error > 15:
+                    run_model = True
+                    window['image'].update(visible=True)
+                    current_sleep = False
+                    current_main = True
+
+                seq_frames = []
         # Settings Logic
         # Button Operations
         if event == '1: Brightness':
@@ -481,21 +557,6 @@ while True:
             
                 
         # Capture sequential frames
-        if len(seq_frames) < 1:
-            seq_frames.append(frame)
-        else:
-            img1 = seq_frames[0]
-            img2 = frame
-            
-            img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-            img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-            
-            error = mse(img1, img2)
-            print(error)
-            if error > 15:
-                run_model = True
-            
-            seq_frames = []
         
 
 cap.release()
