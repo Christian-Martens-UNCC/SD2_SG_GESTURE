@@ -1,4 +1,3 @@
-# https://www.pysimplegui.org/en/latest/#jump-start
 import PySimpleGUI as sg
 import cv2
 import csv
@@ -7,12 +6,12 @@ import datetime
 import mediapipe as mp
 from fn_model_2_1 import *
 from fn_char_storage import *
-from option_menu_parameters import *
 import numpy as np
 import os
 import time
+import RPi.GPIO as GPIO
 
-# Define main layout for GUI
+# Create Layout of the GUI
 main_layout = [
     [sg.Column([
         [sg.Text('', justification='center', expand_x=True)],
@@ -45,109 +44,16 @@ main_layout = [
     ], element_justification='c', vertical_alignment='center')]
 ]
 
-btn_size = (60, 15)
-
 # Define settings layout for GUI
 # Contains: Icons for each setting (like brightness, gestures, contrast)
 setting_layout = [
     # NOT FINISHED
-    [sg.Column([
-        [sg.Text('Settings', font='_ 24 bold', justification='center', expand_x=True)],
-        [sg.Column([
-            [sg.Button('1: Brightness', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
-            sg.Button('2: Contrast', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
-            sg.Button('3: Camera Flip', size=btn_size, button_color=('black', 'white'), pad=(10, 10))]
-        ], justification='c')],
-        [sg.Column([
-            [sg.Button('4: Red Adjustment', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
-            sg.Button('5: Green Adjustment', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
-            sg.Button('6: Blue Adjustment', size=btn_size, button_color=('black', 'white'), pad=(10, 10))]
-        ], justification='c')],
-        [sg.Column([
-            [sg.Button('7: Timer', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
-            sg.Button('8: Detection Conf', size=btn_size, button_color=('black', 'white'), pad=(10, 10)),
-            sg.Button('9: Tracking Conf', size=btn_size, button_color=('black', 'white'), pad=(10, 10))]
-        ], justification='c')]
-    ], element_justification='c', vertical_alignment='center', justification='c')]
-]
-
-bright_layout = [
-    [sg.Column([
-        [sg.Text('Brightness Setting', size=(20, 1), justification='center')],
-        [sg.Slider(range=(1, 9), default_value=brightness_dic["stored_val"], orientation='h', size=(120, 40))],
-        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
-    ], element_justification='c', vertical_alignment='center', justification='c')]
-]
-contrast_layout = [
-    [sg.Column([
-        [sg.Text('Contrast Setting', size=(20, 1), justification='center')],
-        [sg.Slider(range=(1, 9), default_value=5, orientation='h', size=(120, 40))],
-        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
-    ], element_justification='c', vertical_alignment='center', justification='c')]
-]
-camera_layout = [
-    [sg.Column([
-        [sg.Text('Camera Orientation Setting', size=(20, 1), justification='center')],
-        [sg.Slider(range=(1, 4), default_value=5, orientation='h', size=(120, 40))],
-        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
-    ], element_justification='c', vertical_alignment='center', justification='c')]
-]
-red_layout = [
-    [sg.Column([
-        [sg.Text('Red Enhancement', size=(20, 1), justification='center')],
-        [sg.Slider(range=(0, 10), default_value=5, orientation='h', size=(120, 40))],
-        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
-    ], element_justification='c', vertical_alignment='center', justification='c')]
-]
-green_layout = [
-    [sg.Column([
-        [sg.Text('Green Enhancement', size=(20, 1), justification='center')],
-        [sg.Slider(range=(0, 10), default_value=5, orientation='h', size=(120, 40))],
-        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
-    ], element_justification='c', vertical_alignment='center', justification='c')]
-]
-blue_layout = [
-    [sg.Column([
-        [sg.Text('Blue Enhancement', size=(20, 1), justification='center')],
-        [sg.Slider(range=(0, 10), default_value=5, orientation='h', size=(120, 40))],
-        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
-    ], element_justification='c', vertical_alignment='center', justification='c')]
-]
-timer_layout = [
-    # Change timer between checks, which can be easily implemented with gestures
-    # Input string object that will continue to append characters (numbers in this case) until OK is pressed
-]
-detect_layout = [
-    [sg.Column([
-        [sg.Text('Detection Confidence', size=(20, 1), justification='center')],
-        [sg.Slider(range=(1, 10), default_value=5, orientation='h', size=(120, 40))],
-        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
-    ], element_justification='c', vertical_alignment='center', justification='c')]
-]
-tracking_layout = [
-    [sg.Column([
-        [sg.Text('Tracking Confidence', size=(20, 1), justification='center')],
-        [sg.Slider(range=(1, 10), default_value=5, orientation='h', size=(120, 40))],
-        [sg.Button('OK', size=(5, 1), pad=(10, (5, 10)), button_color=('black', 'white'), border_width=0)]
-    ], element_justification='c', vertical_alignment='center', justification='c')]
 ]
 
 # Layout for GUI that controls visibilty of each sub-layout
 layout = [
-    [
-        sg.Column(main_layout, key='main'),
-        sg.Column(setting_layout, key='setting', visible=False),
-        sg.Column(bright_layout, key='bright', visible=False),
-        sg.Column(contrast_layout, key='contrast', visible=False),
-        sg.Column(camera_layout, key='camera', visible=False),
-        sg.Column(red_layout, key='red', visible=False),
-        sg.Column(green_layout, key='green', visible=False),
-        sg.Column(blue_layout, key='blue', visible=False),
-        sg.Column(timer_layout, key='timer', visible=False),
-        sg.Column(detect_layout, key='detect', visible=False),
-        sg.Column(tracking_layout, key='tracking', visible=False)
-    ],
-    [sg.Button('Main'), sg.Button('Setting')]
+    [sg.Column(main_layout, key='main'), sg.Column(setting_layout, key='setting', visible=False)],
+    [sg.Button('Main', font='_ 32'), sg.Button('Setting', font='_ 32')]
 ]
 
 def mse(img1, img2):
@@ -192,19 +98,36 @@ def convert_gesture(gesture, saved_gestures, need_verify):
             else:
                 return "Invalid"
 
-# Create the Window
+# Create the PySimpleGUI Window
 window = sg.Window('SG_GESTURE', layout, size=(1920, 1080))
+
+# Initialize variables
 run_model = False
+
+# Set this variable True if using Jetson Nano with Raspberry Pi camera module, False if using personal webcam
 nano_cam = False
 
 if nano_cam:
-    cap = cv2.VideoCapture('nvarguscamerasrc ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=2 ! video/x-raw, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink' , cv2.CAP_GSTREAMER)
+    # cap = cv2.VideoCapture('nvarguscamerasrc ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=2 ! video/x-raw, format=(string)BGRx ! videoconvert ! queue max-size-buffers=1 leaky=downstream ! video/x-raw, format=(string)BGR ! appsink max-buffers=1 drop=True' , cv2.CAP_GSTREAMER)
+    #  Settings tried: 1.5,0.5; 1.5,0.3; 1.2,0.3; 1.2,0.15; 1.2,0.0
+    cap = cv2.VideoCapture('nvarguscamerasrc sensor-mode=4 ! video/x-raw(memory:NVMM), width=(int)640, height=(int)480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=2 ! videobalance contrast=1.1 brightness=0.15 saturation=0.5 ! video/x-raw, format=(string)BGRx ! videoconvert ! queue max-size-buffers=1 leaky=downstream ! video/x-raw, format=(string)BGR ! appsink max-buffers=1 drop=True' , cv2.CAP_GSTREAMER)
 else:
     cap = cv2.VideoCapture(0)
-    
-model = keras.models.load_model('model2_2.h5', compile=False)
+
+# Load Keras model
+# model = keras.models.load_model('model20.h5', compile=True)
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
+
+model = "model2_2.tflite"
+interpreter = tf.lite.Interpreter(model)
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+input_shape = input_details[0]['shape']
+# print(input_shape)
+
+# Initialize MediaPipe Hands module with desired parameters
 hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.1, min_tracking_confidence=0.3)
 
 seq_frames = []
@@ -230,28 +153,43 @@ current_sleep = True
 # CSV file variables
 filename = "Needle_Checks.csv"
 
+# Andon Light stuff
+RelayA = [21, 20, 26]
+RelayB = [16, 19, 13]
+Pin21 = 21
+check_time = 30
+andon_status = False
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+
+GPIO.setup(RelayA, GPIO.OUT, initial=GPIO.LOW)
+time.sleep(2)
+
 def my_popup_quick_message(message, font='_ 20', auto_close_duration=2):
     return sg.popup_quick_message(message, font=font, auto_close_duration=auto_close_duration)
 
-while True:
+# Main event loop
+while cap.isOpened():
     event, values = window.read(timeout=20)
     
     # Check for gesture-based events
     if gesture_event:
         event = gesture_event
         gesture_event = 0
-
+    
     # Read the camera frame
     ret, frame = cap.read()
-    h, w, c = frame.shape
+    if ret:
+        h, w, c = frame.shape
     x_pos, y_pos = [], []
     n = []
 
     # Convert the frame from BGR to RGB
     # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
-    results = hands.process(frame)
-    
+
+    if ret:    
+        results = hands.process(frame)
     if event in ('Stop', sg.WIN_CLOSED, 'Close'):
         if run_model:
             run_model = False  # Stop running
@@ -260,33 +198,13 @@ while True:
         # When close window or press Close
         if event in (sg.WIN_CLOSED, 'Close'): break
     # Run Model
-    
-    # # DEBUG:
-    # event = '1: Brightness'
-    
+
     if event == 'Setting':
-        run_model = False
         window['setting'].update(visible=True)
         window['main'].update(visible=False)
     elif event == 'Main':
-        run_model = True
         window['main'].update(visible=True)
         window['setting'].update(visible=False)
-    elif event == '1: Brightness':
-        window['bright'].update(visible=True)
-        window['setting'].update(visible=False)
-        
-        window['main'].update(visible=False)
-    elif event == '2: Contrast':
-        window['contrast'].update(visible=True)
-        window['setting'].update(visible=False)
-        
-        window['main'].update(visible=False)
-    elif event == '3. Camera Flip':
-        window['camera'].update(visible=True)
-        window['setting'].update(visible=False)
-        
-        window['main'].update(visible=False)
 
     if run_model:
         if afk_start_time == 0:
@@ -325,15 +243,25 @@ while True:
                         n.append(adjusted_x[i])
                         n.append(adjusted_y[i])
 
+                    # Draw the hand landmarks on the original camera frame
                     mp_drawing.draw_landmarks(frame, hlms,
                                               mp_hands.HAND_CONNECTIONS,
                                               mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=4),
                                               mp_drawing.DrawingSpec(color=(0, 153, 153), thickness=2, circle_radius=2))
 
-                predict = np.argmax(model.predict(np.array([n]), batch_size=1, verbose=0))
-                last_gesture, gest_history = char_storage(predict, gest_history, gest_len)
+                # Make a prediction of the gesture using the trained model
+                # predict = np.argmax(model.predict(np.array([n]), batch_size=1, verbose=0))
+                input_data = np.array([n],dtype=np.float32)
+
+                interpreter.set_tensor(input_details[0]['index'],input_data)
+
+                interpreter.invoke()
+
+                predict = np.argmax(interpreter.get_tensor(output_details[0]['index']))
                 
-                # Update 'current' label with digit and meaning of gesture
+                last_gesture, gest_history = char_storage(predict, gest_history, gest_len)
+
+                 # Update 'current' label with digit and meaning of gesture
                 output_string = str(predict) + ' - ' + convert_gesture(predict, saved_gestures, need_verify)
                 window['current'].update(value=(output_string))
                 print(predict)
@@ -350,10 +278,12 @@ while True:
                     else:
                         # No previous saved gestures
                         my_popup_quick_message('No previous gestures recorded')
-                elif last_gesture == 9 and not need_verify:
-                    gesture_event = 'Setting'
-                    current_main = False
-                    current_settings = True
+                
+                # COMMENTED OUT FOR EXPO:
+                # elif last_gesture == 9 and not need_verify:
+                #     gesture_event = 'Setting'
+                #     current_main = False
+                #     current_settings = True
                 # Check if already verifying gesture
                 elif not need_verify:
                     # Save the gesture to verify
@@ -514,23 +444,14 @@ while True:
                     elif verify_gesture in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9):
                         my_popup_quick_message('Invalid verification gesture, try again')
                         verify_gesture = -1
-                    
-        elif current_settings:
-            # Settings logic after
-            if curr_gesture == 1:
-                # Perform "brightness" button action
-                gesture_event = '1: Brightness'
-            
-            
-        # Update the PySimpleGUI Image object
-        # window['image'].update(data=cv2.imencode('.png', frame)[1].tobytes())
-        
-        
-        display_img = resize_image(frame, 170)
-        # Show Image
-        imgbytes = cv2.imencode('.png', display_img)[1].tobytes()
-        window['image'].update(data=imgbytes)
 
+        # Resize the camera frame and update the GUI window with the image
+        if ret:
+            display_img = resize_image(frame, 170)
+            imgbytes = cv2.imencode('.png', display_img)[1].tobytes()
+            window['image'].update(data=imgbytes)
+
+        # If the user clicked the "Exit" button or closed the window, stop running the model
         if event == 'Exit' or event == sg.WIN_CLOSED:
             cap.release()
             break
@@ -542,6 +463,9 @@ while True:
             # print the elapsed time in the hours:minutes:seconds format
             window['sleep_time'].update(visible=True)
             window['sleep_time'].update(value="Elapsed Time since previous check: {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
+            if elapsed_time >= check_time and not andon_status:
+                GPIO.output(Pin21, GPIO.HIGH)
+                andon_status = True
             if len(seq_frames) < 1:
                 seq_frames.append(frame)
             else:
@@ -559,21 +483,9 @@ while True:
                     current_sleep = False
                     current_main = True
                     afk_start_time = 0
+                    
+                    #Turn off andon light
+                    GPIO.output(Pin21, GPIO.LOW)
+                    andon_status = False
 
                 seq_frames = []
-        # Settings Logic
-        # Button Operations
-        if event == '1: Brightness':
-            # Brightness setting logic:
-            # First: Set correct layout
-            window['bright'].update(visible=True)
-            window['setting'].update(visible=False)
-            
-            # Second: 
-            
-                
-        # Capture sequential frames
-        
-
-cap.release()
-window.close()
