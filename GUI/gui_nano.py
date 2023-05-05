@@ -73,6 +73,8 @@ def resize_image(img, scale_percent) :
     return resized
 
 def convert_gesture(gesture, saved_gestures, need_verify):
+    if gesture == 9:
+        return "Go 49ers!"
     if need_verify:
         if gesture == 10:
             return "Yes"
@@ -93,6 +95,8 @@ def convert_gesture(gesture, saved_gestures, need_verify):
         elif len(saved_gestures) in (1, 2):
             if gesture == 0:
                 return "No"
+            elif gesture == 11:
+                return "Delete previous"
             elif gesture == 10:
                 return "Yes"
             else:
@@ -105,7 +109,7 @@ window = sg.Window('SG_GESTURE', layout, size=(1920, 1080))
 run_model = False
 
 # Set this variable True if using Jetson Nano with Raspberry Pi camera module, False if using personal webcam
-nano_cam = False
+nano_cam = True
 
 if nano_cam:
     # cap = cv2.VideoCapture('nvarguscamerasrc ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=2 ! video/x-raw, format=(string)BGRx ! videoconvert ! queue max-size-buffers=1 leaky=downstream ! video/x-raw, format=(string)BGR ! appsink max-buffers=1 drop=True' , cv2.CAP_GSTREAMER)
@@ -159,6 +163,7 @@ RelayB = [16, 19, 13]
 Pin21 = 21
 check_time = 30
 andon_status = False
+check_performed = False
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -194,6 +199,8 @@ while cap.isOpened():
         if run_model:
             run_model = False  # Stop running
             cap.release()  # Release video
+            GPIO.output(Pin21, GPIO.LOW)
+            GPIO.cleanup()
             if event != sg.WIN_CLOSED: window['image'].update(filename='')  # Destroy picture
         # When close window or press Close
         if event in (sg.WIN_CLOSED, 'Close'): break
@@ -216,7 +223,8 @@ while cap.isOpened():
                 window['image'].update(visible=False)
                 current_main = False
                 current_sleep = True
-                start_time = time.time()
+                if check_performed:
+                    start_time = time.time()
             if results.multi_handedness:
                 for hand in results.multi_handedness:
                     if hand.classification[0].label == "Right":
@@ -430,6 +438,11 @@ while cap.isOpened():
                         current_main = False
                         current_sleep = True
                         start_time = time.time()
+                        
+                        #Turn off andon light
+                        GPIO.output(Pin21, GPIO.LOW)
+                        andon_status = False
+                        check_performed = True
                     elif verify_gesture == 11:
                         my_popup_quick_message('Recieved NO gesture: redo session')
 
@@ -453,7 +466,11 @@ while cap.isOpened():
 
         # If the user clicked the "Exit" button or closed the window, stop running the model
         if event == 'Exit' or event == sg.WIN_CLOSED:
-            cap.release()
+            run_model = False  # Stop running
+            cap.release()  # Release video
+            GPIO.output(Pin21, GPIO.LOW)
+            GPIO.cleanup()
+            if event != sg.WIN_CLOSED: window['image'].update(filename='')  # Destroy picture
             break
     else:
         if current_sleep:
@@ -465,6 +482,7 @@ while cap.isOpened():
             window['sleep_time'].update(value="Elapsed Time since previous check: {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
             if elapsed_time >= check_time and not andon_status:
                 GPIO.output(Pin21, GPIO.HIGH)
+                check_performed = False
                 andon_status = True
             if len(seq_frames) < 1:
                 seq_frames.append(frame)
@@ -484,8 +502,6 @@ while cap.isOpened():
                     current_main = True
                     afk_start_time = 0
                     
-                    #Turn off andon light
-                    GPIO.output(Pin21, GPIO.LOW)
-                    andon_status = False
+                    
 
                 seq_frames = []
