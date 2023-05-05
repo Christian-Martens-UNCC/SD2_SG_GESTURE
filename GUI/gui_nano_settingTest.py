@@ -111,10 +111,21 @@ run_model = False
 # Set this variable True if using Jetson Nano with Raspberry Pi camera module, False if using personal webcam
 nano_cam = True
 
+# Settings variables
+set_brightness = brightness_dic[str(brightness_dic["stored_val"])]
+set_contrast = contrast_dic[str(contrast_dic["stored_val"])]
+set_camflip = camera_flip_dic[str(camera_flip_dic["stored_val"])]
+set_redshift = red_shift_dic[str(red_shift_dic["stored_val"])]
+set_greenshift = green_shift_dic[str(green_shift_dic["stored_val"])]
+set_blueshift = blue_shift_dic[str(blue_shift_dic["stored_val"])]
+set_timer = check_timer_dic["stored_val"]
+set_detect_conf = detect_con_dic[str(detect_con_dic["stored_val"])]
+set_track_conf = tracking_con_dic[str(tracking_con_dic["stored_val"])]
+
 if nano_cam:
     # cap = cv2.VideoCapture('nvarguscamerasrc ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=2 ! video/x-raw, format=(string)BGRx ! videoconvert ! queue max-size-buffers=1 leaky=downstream ! video/x-raw, format=(string)BGR ! appsink max-buffers=1 drop=True' , cv2.CAP_GSTREAMER)
     #  Settings tried: 1.5,0.5; 1.5,0.3; 1.2,0.3; 1.2,0.15; 1.2,0.0
-    cap = cv2.VideoCapture('nvarguscamerasrc sensor-mode=4 ! video/x-raw(memory:NVMM), width=(int)640, height=(int)480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=2 ! videobalance contrast={set_contrast} brightness=0.15 saturation=0.5 ! video/x-raw, format=(string)BGRx ! videoconvert ! queue max-size-buffers=1 leaky=downstream ! video/x-raw, format=(string)BGR ! appsink max-buffers=1 drop=True' , cv2.CAP_GSTREAMER)
+    cap = cv2.VideoCapture(f'nvarguscamerasrc sensor-mode=4 ! video/x-raw(memory:NVMM), width=(int)640, height=(int)480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method={set_camflip} ! videobalance contrast={set_contrast} brightness={set_brightness} saturation=0.5 ! video/x-raw, format=(string)BGRx ! videoconvert ! queue max-size-buffers=1 leaky=downstream ! video/x-raw, format=(string)BGR ! appsink max-buffers=1 drop=True' , cv2.CAP_GSTREAMER)
 else:
     cap = cv2.VideoCapture(0)
 
@@ -132,7 +143,7 @@ input_shape = input_details[0]['shape']
 # print(input_shape)
 
 # Initialize MediaPipe Hands module with desired parameters
-hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.1, min_tracking_confidence=0.3)
+hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=set_detect_conf, min_tracking_confidence=set_track_conf)
 
 seq_frames = []
 saved_gestures = []  # List of saved gestures for the gauge checks
@@ -161,7 +172,7 @@ filename = "Needle_Checks.csv"
 RelayA = [21, 20, 26]
 RelayB = [16, 19, 13]
 Pin21 = 21
-check_time = 30
+check_time = set_timer
 andon_status = False
 check_performed = False
 
