@@ -1,0 +1,52 @@
+nano xyz.sh
+
+#!/bin/sh
+#!/home/sdgesture/env/bin/python3
+
+sleep 10
+
+cd ML/GUI/
+./xyz.py
+
+ctrl+x, y, enter
+
+sudo chmod +x xyz.sh
+
+sudo nano /etc/systemd/system/xyz.service
+
+[Unit]
+Description=Autorun GUI
+After=graphical.target
+
+[Service]
+Type=idle
+ExecStartPre=/bin/sleep 10
+ExecStart=/home/sdgesture/xyz.sh
+StartLimitInterval=20
+RestartSec=20
+
+[Install]
+WantedBy=graphical.target
+
+ctrl+x, y, enter
+
+sudo systemctl enable xyz.service
+
+sudo systemctl start xyz.service
+
+sudo systemctl stop xyz.service
+
+
+------ Check if service is working -----------
+systemctl is-enabled xyz.service
+
+systemctl is-failed xyz.service
+
+systemctl is-active xyz.service
+
+------ Startup Application --------------
+Name: AutoGUI
+
+Command: /home/sd2gesture/xyz.sh
+
+Comment: anything
